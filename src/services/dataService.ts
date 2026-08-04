@@ -44,6 +44,14 @@ function mapParticipant(row: Record<string, unknown>): Participant {
     referredById: (row.referred_by_id as string | null) ?? null,
     status: row.status as ParticipantStatus,
     createdAt: String(row.created_at),
+    phone: row.phone != null ? String(row.phone) : null,
+    street: row.street != null ? String(row.street) : null,
+    unit: row.unit != null ? String(row.unit) : null,
+    city: row.city != null ? String(row.city) : null,
+    state: row.state != null ? String(row.state) : null,
+    heardAbout: row.heard_about != null ? String(row.heard_about) : null,
+    signedBy: row.signed_by != null ? String(row.signed_by) : null,
+    coppaRequired: Boolean(row.coppa_required),
   }
 }
 
@@ -111,6 +119,13 @@ export async function getParticipantDetail(id: string): Promise<ParticipantDetai
       participantId: String(row.participant_id),
       firstName: String(row.first_name),
       grade: String(row.grade),
+      dateOfBirth: row.date_of_birth != null ? String(row.date_of_birth) : null,
+      schoolName: row.school_name != null ? String(row.school_name) : null,
+      schoolType: row.school_type != null ? String(row.school_type) : null,
+      studentEmail: row.student_email != null ? String(row.student_email) : null,
+      accommodations: row.accommodations != null ? String(row.accommodations) : null,
+      hasHomeDevice:
+        row.has_home_device == null ? null : Boolean(row.has_home_device),
     }))
   }
 
@@ -237,9 +252,15 @@ export async function addReferral(
 }
 
 
+/** Unambiguous suffix alphabet (no 0/1/8/B/I/L/O — B vs 8 mix-ups are common). */
+const CODE_SUFFIX_ALPHABET = '2345679ACDEFGHJKMNPQRSTUVWXYZ'
+
 export function generateReferralCode(parentName: string): string {
   const base = parentName.replace(/[^a-zA-Z]/g, '').slice(0, 4).toUpperCase() || 'KID'
-  const suffix = Math.random().toString(36).slice(2, 5).toUpperCase()
+  let suffix = ''
+  for (let i = 0; i < 3; i++) {
+    suffix += CODE_SUFFIX_ALPHABET[Math.floor(Math.random() * CODE_SUFFIX_ALPHABET.length)]
+  }
   return `${base}${suffix}`
 }
 
@@ -412,5 +433,5 @@ export function publicSiteBaseUrl(): string {
 }
 
 export function signupLinkForCode(code: string): string {
-  return `${publicSiteBaseUrl()}/signup.html?ref=${encodeURIComponent(code)}`
+  return `${publicSiteBaseUrl()}/parents.html?ref=${encodeURIComponent(code)}#join`
 }

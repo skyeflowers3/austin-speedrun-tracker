@@ -9,6 +9,8 @@ import {
   updateParticipantStatus,
 } from '../services/dataService'
 import type { Participant, ParticipantDetail, ParticipantStatus } from '../types'
+import { ConfirmDialog } from './ConfirmDialog'
+import { Notice } from './Notice'
 import { StatusBadge } from './StatusBadge'
 
 interface Props {
@@ -28,6 +30,7 @@ export function ParticipantDetailView({ participantId, onBack, onOpen }: Props) 
   const [editEmail, setEditEmail] = useState('')
   const [editZip, setEditZip] = useState('')
   const [editGrade, setEditGrade] = useState('')
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false)
   const [saving, setSaving] = useState(false)
 
   async function load() {
@@ -95,11 +98,9 @@ export function ParticipantDetailView({ participantId, onBack, onOpen }: Props) 
     }
   }
 
-  async function onDelete() {
+  async function onDeleteConfirmed() {
     if (!detail) return
-    if (!window.confirm(`Delete ${detail.parentName}? This also removes them from Supabase.`)) {
-      return
-    }
+    setConfirmDeleteOpen(false)
     try {
       await deleteParticipant(detail.id)
       onBack()
@@ -118,7 +119,9 @@ export function ParticipantDetailView({ participantId, onBack, onOpen }: Props) 
         <button type="button" onClick={onBack} className="text-sm text-blue hover:underline">
           ← Back
         </button>
-        <p className="mt-4 text-danger">{error ?? 'Not found'}</p>
+        <Notice tone="error" className="mt-4">
+          {error ?? 'Not found'}
+        </Notice>
       </div>
     )
   }
@@ -141,7 +144,7 @@ export function ParticipantDetailView({ participantId, onBack, onOpen }: Props) 
           ) : null}
           <button
             type="button"
-            onClick={() => void onDelete()}
+            onClick={() => setConfirmDeleteOpen(true)}
             className="rounded-lg px-3 py-1.5 text-sm font-semibold text-danger hover:bg-danger/10"
           >
             Delete
@@ -217,8 +220,19 @@ export function ParticipantDetailView({ participantId, onBack, onOpen }: Props) 
               <>
                 <h1 className="font-display text-3xl font-semibold text-ink">{detail.parentName}</h1>
                 <p className="mt-1 text-sm text-ink-muted">
-                  {detail.email} · {detail.zip} · {detail.grade}
+                  {detail.email}
+                  {detail.phone ? ` · ${detail.phone}` : ''} · {detail.zip} · {detail.grade}
                 </p>
+                {(detail.street || detail.city) && (
+                  <p className="mt-1 text-sm text-ink-muted">
+                    {[detail.street, detail.unit, detail.city, detail.state, detail.zip]
+                      .filter(Boolean)
+                      .join(', ')}
+                  </p>
+                )}
+                {detail.coppaRequired ? (
+                  <p className="mt-1 text-xs font-semibold text-gold-deep">COPPA consent required</p>
+                ) : null}
               </>
             )}
           </div>
@@ -271,9 +285,9 @@ export function ParticipantDetailView({ participantId, onBack, onOpen }: Props) 
           </div>
         </div>
 
-        <div className="mt-5 rounded-lg bg-surface-warm px-4 py-3 text-sm">
-          <span className="font-medium text-ink-soft">Referred by: </span>
-          {detail.referredBy ? (
+        {detail.referredBy ? (
+          <div className="mt-5 rounded-lg bg-surface-warm px-4 py-3 text-sm">
+            <span className="font-medium text-ink-soft">Referred by: </span>
             <button
               type="button"
               className="font-semibold text-blue hover:underline"
@@ -281,10 +295,8 @@ export function ParticipantDetailView({ participantId, onBack, onOpen }: Props) 
             >
               {detail.referredBy.parentName}
             </button>
-          ) : (
-            <span className="text-ink-muted">No referral</span>
-          )}
-        </div>
+          </div>
+        ) : null}
       </div>
 
       <section className="mt-6 rounded-xl border border-line bg-surface-elevated p-6">
@@ -294,9 +306,23 @@ export function ParticipantDetailView({ participantId, onBack, onOpen }: Props) 
         ) : (
           <ul className="mt-3 divide-y divide-line">
             {detail.children.map((c) => (
-              <li key={c.id} className="flex justify-between gap-3 py-2 text-sm">
-                <span className="font-medium">{c.firstName}</span>
-                <span className="text-ink-muted">{c.grade}</span>
+              <li key={c.id} className="py-3 text-sm">
+                <div className="flex justify-between gap-3">
+                  <span className="font-medium">{c.firstName}</span>
+                  <span className="text-ink-muted">{c.grade}</span>
+                </div>
+                <p className="mt-1 text-xs text-ink-muted">
+                  {[
+                    c.dateOfBirth ? `DOB ${c.dateOfBirth}` : null,
+                    c.schoolName,
+                    c.schoolType,
+                    c.studentEmail,
+                    c.accommodations ? `Accom: ${c.accommodations}` : null,
+                    c.hasHomeDevice === false ? 'No home device' : null,
+                  ]
+                    .filter(Boolean)
+                    .join(' · ')}
+                </p>
               </li>
             ))}
           </ul>
@@ -345,10 +371,8 @@ export function ParticipantDetailView({ participantId, onBack, onOpen }: Props) 
       </section>
 
       <section className="mt-6 rounded-xl border border-line bg-surface-elevated p-6">
-        <h2 className="font-display text-xl font-semibold">Add a referral</h2>
-        <p className="mt-1 text-sm text-ink-muted">
-          Link someone who signed up after this person and doesn’t already have a referral.
-        </p>
+        <h2 className="font-display text-xl font-semibold">Add someone they referred</h2>
+        <p className="mt-1 text-sm text-ink-muted">Credit another signup to this person.</p>
         <div className="mt-4 flex flex-wrap gap-2">
           <select
             value={referralPickId}
@@ -358,7 +382,7 @@ export function ParticipantDetailView({ participantId, onBack, onOpen }: Props) 
             <option value="">
               {candidates.length === 0
                 ? 'No eligible people…'
-                : 'Select someone without a referral…'}
+                : 'Select someone they referred…'}
             </option>
             {candidates.map((c) => (
               <option key={c.id} value={c.id}>
@@ -381,11 +405,24 @@ export function ParticipantDetailView({ participantId, onBack, onOpen }: Props) 
                 )
             }}
           >
-            Add referral
+            Credit to them
           </button>
         </div>
-        {error && <p className="mt-3 text-sm text-danger">{error}</p>}
+        {error && (
+          <Notice tone="error" className="mt-3">
+            {error}
+          </Notice>
+        )}
       </section>
+
+      <ConfirmDialog
+        open={confirmDeleteOpen}
+        title={`Delete ${detail.parentName}?`}
+        body="This removes them from the Tracker and Supabase, including their kids and referral links."
+        confirmLabel="Delete"
+        onCancel={() => setConfirmDeleteOpen(false)}
+        onConfirm={() => void onDeleteConfirmed()}
+      />
     </div>
   )
 }

@@ -1,25 +1,6 @@
--- Children for signup + updated register_participant.
--- Run in the same Austin Speedrun Supabase project.
+-- Return whether a referral code actually matched + strip ambiguous suffix chars.
+-- Run in the Austin Speedrun Supabase SQL Editor after patch-signup-children.sql.
 
-create table if not exists public.children (
-  id uuid primary key default gen_random_uuid(),
-  participant_id uuid not null references public.participants (id) on delete cascade,
-  first_name text not null,
-  grade text not null,
-  created_at timestamptz not null default now()
-);
-
-create index if not exists children_participant_id_idx on public.children (participant_id);
-
-alter table public.children enable row level security;
-
-drop policy if exists "children_all_anon" on public.children;
-create policy "children_all_anon"
-  on public.children for all to anon, authenticated
-  using (true) with check (true);
-
--- Signup with parent first/last + one or more children (jsonb array).
--- p_children example: [{"first_name":"Alex","grade":"7th grade"},{"first_name":"Sam","grade":"6th grade"}]
 create or replace function public.register_participant(
   p_parent_first_name text,
   p_parent_last_name text,
@@ -166,8 +147,5 @@ begin
   );
 end;
 $$;
-
--- Drop old 5-arg register signature if it exists (from earlier patch)
-drop function if exists public.register_participant(text, text, text, text, text);
 
 grant execute on function public.register_participant(text, text, text, text, jsonb, text) to anon, authenticated;

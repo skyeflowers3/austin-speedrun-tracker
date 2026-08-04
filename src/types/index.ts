@@ -6,6 +6,12 @@ export interface Child {
   participantId: string
   firstName: string
   grade: string
+  dateOfBirth?: string | null
+  schoolName?: string | null
+  schoolType?: string | null
+  studentEmail?: string | null
+  accommodations?: string | null
+  hasHomeDevice?: boolean | null
 }
 
 export interface Participant {
@@ -18,6 +24,14 @@ export interface Participant {
   referredById: string | null
   status: ParticipantStatus
   createdAt: string
+  phone?: string | null
+  street?: string | null
+  unit?: string | null
+  city?: string | null
+  state?: string | null
+  heardAbout?: string | null
+  signedBy?: string | null
+  coppaRequired?: boolean
 }
 
 export interface Referral {

@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from 'react'
 import { deleteParticipant, listParticipants, resetDemoData, usingMockData } from '../services/dataService'
 import type { Participant, ParticipantStatus } from '../types'
 import { AddParticipantForm } from './AddParticipantForm'
+import { ConfirmDialog } from './ConfirmDialog'
+import { Notice } from './Notice'
 import { StatusBadge } from './StatusBadge'
 
 type Filter = 'all' | 'referred' | 'organic' | 'has_referrals'
@@ -18,6 +20,7 @@ export function ParticipantsView({ onOpen }: Props) {
   const [zip, setZip] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
+  const [pendingDelete, setPendingDelete] = useState<{ id: string; name: string } | null>(null)
 
   async function load() {
     setLoading(true)
@@ -35,8 +38,10 @@ export function ParticipantsView({ onOpen }: Props) {
     void load()
   }, [])
 
-  async function onDelete(id: string, name: string) {
-    if (!window.confirm(`Delete ${name}? This also removes them from Supabase (demo).`)) return
+  async function confirmDelete() {
+    if (!pendingDelete) return
+    const { id } = pendingDelete
+    setPendingDelete(null)
     try {
       await deleteParticipant(id)
       await load()
@@ -90,10 +95,6 @@ export function ParticipantsView({ onOpen }: Props) {
             Tracker
           </p>
           <h1 className="font-display text-3xl font-semibold text-ink">Participants</h1>
-          <p className="mt-1 text-sm text-ink-muted">
-            All waitlist / signup rows. Open a person to see who they referred.
-            {usingMockData() ? ' · using local mock data' : ' · connected to Supabase'}
-          </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <AddParticipantForm onCreated={() => void load()} />
@@ -112,10 +113,11 @@ export function ParticipantsView({ onOpen }: Props) {
       </div>
 
       {usingMockData() && (
-        <div className="mb-4 rounded-lg border border-line bg-surface-warm px-4 py-3 text-sm text-ink-soft">
-          Tracker is on <b>mock data</b>. Connect Supabase (`.env`) to see real signups from
-          <code className="mx-1">parents.html</code>. Until then, use <b>Add participant</b>.
-        </div>
+        <Notice className="mb-4">
+          Tracker is on <b>mock data</b>. Connect Supabase (<code className="font-mono">.env</code>) to
+          see real signups from <code className="font-mono">parents.html#join</code>. Until then, use{' '}
+          <b>Add participant</b>.
+        </Notice>
       )}
 
       <div className="mb-4 grid gap-3 md:grid-cols-4">
@@ -161,7 +163,9 @@ export function ParticipantsView({ onOpen }: Props) {
       </div>
 
       {error && (
-        <p className="mb-4 rounded-lg bg-danger/10 px-3 py-2 text-sm text-danger">{error}</p>
+        <Notice tone="error" className="mb-4">
+          {error}
+        </Notice>
       )}
 
       <div className="overflow-hidden rounded-xl border border-line bg-surface-elevated">
@@ -239,7 +243,7 @@ export function ParticipantsView({ onOpen }: Props) {
                       className="rounded-md px-2 py-1 text-xs font-semibold text-danger hover:bg-danger/10"
                       onClick={(e) => {
                         e.stopPropagation()
-                        void onDelete(p.id, p.parentName)
+                        setPendingDelete({ id: p.id, name: p.parentName })
                       }}
                     >
                       Delete
@@ -251,6 +255,15 @@ export function ParticipantsView({ onOpen }: Props) {
           </tbody>
         </table>
       </div>
+
+      <ConfirmDialog
+        open={!!pendingDelete}
+        title={`Delete ${pendingDelete?.name ?? ''}?`}
+        body="This removes them from the Tracker and Supabase, including their kids and referral links."
+        confirmLabel="Delete"
+        onCancel={() => setPendingDelete(null)}
+        onConfirm={() => void confirmDelete()}
+      />
     </div>
   )
 }

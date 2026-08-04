@@ -3,7 +3,7 @@
 Ops tracker for Austin Speedrun waitlist / signup referrals.
 
 - **Participants** list (all waitlist + signup rows)
-- **Participant detail**: kids, referral code, share link (`signup.html?ref=CODE`), who referred them, people they referred, status edits, Add a referral, Edit, Delete
+- **Participant detail**: kids, referral code, share link (`parents.html?ref=CODE#join`), who referred them, people they referred, status edits, Add a referral, Edit, Delete
 - Works on **local mock data** out of the box; point at **Supabase** when `.env` is set
 
 Marketing site lives in [`austin-speedrun`](../austin-speedrun).
@@ -37,7 +37,7 @@ Before you commit, run `git status` and confirm `.env` / `supabase-config.js` ar
 - [x] Tracker `.env` + marketing `supabase-config.js` with the same project keys
 - [x] Confirm Tracker shows “connected to Supabase”
 - [ ] Push this repo to a GT-accessible GitHub remote if it is not already
-- [ ] At deploy: set `VITE_PUBLIC_SITE_URL=https://speedrun.gt.school` and rebuild
+- [ ] **At Tracker deploy (you own this):** set `VITE_PUBLIC_SITE_URL=https://speedrun.gt.school` (or the real marketing URL), then `npm run build` and redeploy. Vite bakes this at build time — if you skip it, share links stay localhost. Marketing site deploy is separate and does not need this from you.
 
 ## Supabase SQL
 
@@ -54,14 +54,15 @@ Optional: [`supabase/seed.sql`](supabase/seed.sql) for demo rows.
 
 | Surface | RPC | Status | Referrals? |
 | --- | --- | --- | --- |
-| Waitlist — `parents.html#join` | `waitlist_participant` | `waitlisted` | No |
-| Signup — `signup.html` | `register_participant` | `registered` | Yes (`?ref=` or optional code field) |
+| Registration — `parents.html#join` | `register_participant` | `registered` | Yes (`?ref=` or optional code field) |
 
-Same email on signup upgrades a waitlisted row. Invite links:
+Same email on re-register updates the household. Invite links:
 
 ```
-{VITE_PUBLIC_SITE_URL}/signup.html?ref=CODE
+{VITE_PUBLIC_SITE_URL}/parents.html?ref=CODE#join
 ```
+
+Run [`supabase/patch-register-full.sql`](supabase/patch-register-full.sql) for the full registration field set.
 
 - **Local:** `http://127.0.0.1:8000` (default / `.env`)
 - **Planned production:** `https://speedrun.gt.school`
@@ -71,4 +72,4 @@ Same email on signup upgrades a waitlisted row. Invite links:
 1. Tracker: `.env` with `VITE_SUPABASE_URL` + `VITE_SUPABASE_ANON_KEY` (+ optional `VITE_PUBLIC_SITE_URL`)
 2. Marketing: copy `assets/supabase-config.example.js` → `assets/supabase-config.js` with the same URL + anon key
 3. Serve marketing (`python3 -m http.server 8000` from `austin-speedrun`), run Tracker (`npm run dev`)
-4. Sign up on `signup.html` → refresh Participants
+4. Register on `parents.html#join` → refresh Participants

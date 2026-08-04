@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { createParticipant } from '../services/dataService'
+import { Notice } from './Notice'
 
 interface Props {
   onCreated: () => void
@@ -134,7 +135,11 @@ export function AddParticipantForm({ onCreated }: Props) {
           />
         </label>
       </div>
-      {error && <p className="mt-3 text-sm text-danger">{error}</p>}
+      {error && (
+        <Notice tone="error" className="mt-3">
+          {error}
+        </Notice>
+      )}
       <button
         type="submit"
         disabled={saving}
