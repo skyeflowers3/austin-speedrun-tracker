@@ -21,6 +21,7 @@ export function ParticipantsView({ onOpen }: Props) {
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [pendingDelete, setPendingDelete] = useState<{ id: string; name: string } | null>(null)
+  const [showAdd, setShowAdd] = useState(false)
 
   async function load() {
     setLoading(true)
@@ -97,7 +98,13 @@ export function ParticipantsView({ onOpen }: Props) {
           <h1 className="font-display text-3xl font-semibold text-ink">Participants</h1>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <AddParticipantForm onCreated={() => void load()} />
+          <button
+            type="button"
+            className="rounded-lg bg-navy px-3 py-2 text-sm font-semibold text-white hover:bg-ink"
+            onClick={() => setShowAdd(true)}
+          >
+            Add participant
+          </button>
           {usingMockData() && (
             <button
               type="button"
@@ -111,6 +118,12 @@ export function ParticipantsView({ onOpen }: Props) {
           )}
         </div>
       </div>
+
+      <AddParticipantForm
+        open={showAdd}
+        onClose={() => setShowAdd(false)}
+        onCreated={() => void load()}
+      />
 
       {usingMockData() && (
         <Notice className="mb-4">

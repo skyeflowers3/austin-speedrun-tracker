@@ -47,7 +47,7 @@ export default function App() {
               Austin Speedrun
             </div>
             <div className="font-mono text-[11px] tracking-widest text-gold-deep uppercase">
-              Referral tracker
+              Participant tracker
             </div>
           </button>
         </div>

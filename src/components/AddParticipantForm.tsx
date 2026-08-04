@@ -3,13 +3,14 @@ import { createParticipant } from '../services/dataService'
 import { Notice } from './Notice'
 
 interface Props {
+  open: boolean
+  onClose: () => void
   onCreated: () => void
 }
 
 const GRADES = ['6th grade', '7th grade', '8th grade', 'Multiple kids']
 
-export function AddParticipantForm({ onCreated }: Props) {
-  const [open, setOpen] = useState(false)
+export function AddParticipantForm({ open, onClose, onCreated }: Props) {
   const [parentName, setParentName] = useState('')
   const [email, setEmail] = useState('')
   const [zip, setZip] = useState('')
@@ -17,6 +18,15 @@ export function AddParticipantForm({ onCreated }: Props) {
   const [referralCodeFromLink, setReferralCodeFromLink] = useState('')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  function resetForm() {
+    setParentName('')
+    setEmail('')
+    setZip('')
+    setGrade('')
+    setReferralCodeFromLink('')
+    setError(null)
+  }
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -31,12 +41,8 @@ export function AddParticipantForm({ onCreated }: Props) {
         referralCodeFromLink: referralCodeFromLink || null,
         submissionMethod: referralCodeFromLink ? 'link' : 'direct_submit',
       })
-      setParentName('')
-      setEmail('')
-      setZip('')
-      setGrade('')
-      setReferralCodeFromLink('')
-      setOpen(false)
+      resetForm()
+      onClose()
       onCreated()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not add participant')
@@ -45,36 +51,16 @@ export function AddParticipantForm({ onCreated }: Props) {
     }
   }
 
-  if (!open) {
-    return (
-      <button
-        type="button"
-        className="rounded-lg bg-navy px-3 py-2 text-sm font-semibold text-white hover:bg-ink"
-        onClick={() => setOpen(true)}
-      >
-        Add participant
-      </button>
-    )
-  }
+  if (!open) return null
 
   return (
     <form
       onSubmit={(e) => void onSubmit(e)}
-      className="w-full max-w-xl rounded-xl border border-line bg-surface-elevated p-4 shadow-sm"
+      className="mb-6 rounded-lg border border-line bg-surface-elevated p-4"
     >
-      <div className="mb-3 flex items-center justify-between gap-2">
-        <h2 className="font-display text-lg font-semibold">Add participant</h2>
-        <button
-          type="button"
-          className="text-sm text-ink-muted hover:text-ink"
-          onClick={() => setOpen(false)}
-        >
-          Cancel
-        </button>
-      </div>
-      <p className="mb-3 text-xs text-ink-muted">
-        Use this until Formspree → Supabase is live. Enter a waitlist submission manually (or
-        re-type one you already sent to Formspree).
+      <h2 className="mb-1 text-sm font-semibold text-ink">Add participant</h2>
+      <p className="mb-4 text-sm text-ink-muted">
+        Use this if a signup didn’t come through, or to add someone who registered offline.
       </p>
       <div className="grid gap-3 sm:grid-cols-2">
         <label className="text-sm sm:col-span-2">
@@ -140,13 +126,26 @@ export function AddParticipantForm({ onCreated }: Props) {
           {error}
         </Notice>
       )}
-      <button
-        type="submit"
-        disabled={saving}
-        className="mt-4 rounded-lg bg-gold px-4 py-2 text-sm font-semibold text-white hover:bg-gold-deep disabled:opacity-50"
-      >
-        {saving ? 'Saving…' : 'Save to tracker'}
-      </button>
+      <div className="mt-4 flex flex-wrap gap-2">
+        <button
+          type="submit"
+          disabled={saving}
+          className="rounded-lg bg-gold px-4 py-2 text-sm font-semibold text-white hover:bg-gold-deep disabled:opacity-50"
+        >
+          {saving ? 'Saving…' : 'Save to tracker'}
+        </button>
+        <button
+          type="button"
+          disabled={saving}
+          className="rounded-lg border border-line bg-surface px-4 py-2 text-sm font-semibold text-ink hover:bg-surface-warm disabled:opacity-50"
+          onClick={() => {
+            resetForm()
+            onClose()
+          }}
+        >
+          Cancel
+        </button>
+      </div>
     </form>
   )
 }

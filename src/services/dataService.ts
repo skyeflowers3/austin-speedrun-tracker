@@ -425,7 +425,7 @@ export function usingMockData(): boolean {
   return !isSupabaseConfigured
 }
 
-/** Marketing site origin for invite links. Local default; at deploy set https://speedrun.gt.school */
+/** Marketing site origin for invite links. Staging S3 for now; later https://speedrun.gt.school */
 export function publicSiteBaseUrl(): string {
   const raw = (import.meta.env.VITE_PUBLIC_SITE_URL as string | undefined)?.trim()
   if (raw) return raw.replace(/\/$/, '')

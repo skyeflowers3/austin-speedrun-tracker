@@ -37,7 +37,7 @@ Before you commit, run `git status` and confirm `.env` / `supabase-config.js` ar
 - [x] Tracker `.env` + marketing `supabase-config.js` with the same project keys
 - [x] Confirm Tracker shows “connected to Supabase”
 - [ ] Push this repo to a GT-accessible GitHub remote if it is not already
-- [ ] **At Tracker deploy (you own this):** set `VITE_PUBLIC_SITE_URL=https://speedrun.gt.school` (or the real marketing URL), then `npm run build` and redeploy. Vite bakes this at build time — if you skip it, share links stay localhost. Marketing site deploy is separate and does not need this from you.
+- [ ] **At Tracker deploy (you own this):** set `VITE_PUBLIC_SITE_URL` to the live marketing URL (staging S3 now; later `https://speedrun.gt.school`), then `npm run build` and redeploy. Vite bakes this at build time — if you skip it, share links stay wrong. Marketing site deploy is separate and does not need this from you.
 
 ## Supabase SQL
 
@@ -47,8 +47,11 @@ In the SQL Editor, run in order (same project):
 2. [`supabase/patch-waitlisted-status.sql`](supabase/patch-waitlisted-status.sql) — if needed for `waitlisted` status  
 3. [`supabase/patch-waitlist-and-register.sql`](supabase/patch-waitlist-and-register.sql) — waitlist / register RPCs  
 4. [`supabase/patch-signup-children.sql`](supabase/patch-signup-children.sql) — `children` table + current `register_participant` (parent first/last + kids jsonb)
-
+5. [`supabase/patch-register-full.sql`](supabase/patch-register-full.sql) — full registration fields used by `parents.html#join`
+6. [`supabase/patch-portal-auth.sql`](supabase/patch-portal-auth.sql) — parent portal (`get_my_household` / Auth link) for [`austin-speedrun-portal`](../austin-speedrun-portal)
 Optional: [`supabase/seed.sql`](supabase/seed.sql) for demo rows.
+
+Parent portal login uses **Supabase magic links** (no Resend). The `provision-portal-login` function is unused for now.
 
 ## How data gets in
 
@@ -64,7 +67,8 @@ Same email on re-register updates the household. Invite links:
 
 Run [`supabase/patch-register-full.sql`](supabase/patch-register-full.sql) for the full registration field set.
 
-- **Local:** `http://127.0.0.1:8000` (default / `.env`)
+- **Local:** `http://127.0.0.1:8000`
+- **Current staging:** `http://austin-speedrun-site.s3-website-us-east-1.amazonaws.com`
 - **Planned production:** `https://speedrun.gt.school`
 
 ## Wire both apps to the same project
