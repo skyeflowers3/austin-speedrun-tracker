@@ -59,7 +59,10 @@ create index if not exists referrals_referred_id_idx on public.referrals (referr
 create index if not exists referrals_status_idx on public.referrals (status);
 
 -- Public read of code → first name for marketing "Referred by …"
-create or replace view public.referral_code_public as
+-- security_invoker: respects RLS on participants (do not use SECURITY DEFINER)
+create or replace view public.referral_code_public
+  with (security_invoker = on)
+as
 select
   referral_code,
   split_part(parent_name, ' ', 1) as display_name

@@ -9,6 +9,7 @@ import {
   updateParticipantStatus,
 } from '../services/dataService'
 import type { Participant, ParticipantDetail, ParticipantStatus } from '../types'
+import { ChildrenEditor, emptyChildDraft, type ChildDraft } from './ChildrenEditor'
 import { ConfirmDialog } from './ConfirmDialog'
 import { Notice } from './Notice'
 import { StatusBadge } from './StatusBadge'
@@ -30,6 +31,7 @@ export function ParticipantDetailView({ participantId, onBack, onOpen }: Props) 
   const [editEmail, setEditEmail] = useState('')
   const [editZip, setEditZip] = useState('')
   const [editGrade, setEditGrade] = useState('')
+  const [editChildren, setEditChildren] = useState<ChildDraft[]>([])
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false)
   const [saving, setSaving] = useState(false)
 
@@ -74,6 +76,15 @@ export function ParticipantDetailView({ participantId, onBack, onOpen }: Props) 
     setEditEmail(detail.email)
     setEditZip(detail.zip)
     setEditGrade(detail.grade)
+    setEditChildren(
+      detail.children.length > 0
+        ? detail.children.map((c) => ({
+            key: c.id,
+            firstName: c.firstName,
+            grade: c.grade,
+          }))
+        : [emptyChildDraft()],
+    )
     setEditing(true)
     setError(null)
   }
@@ -88,6 +99,10 @@ export function ParticipantDetailView({ participantId, onBack, onOpen }: Props) 
         email: editEmail,
         zip: editZip,
         grade: editGrade,
+        children: editChildren.map((c) => ({
+          firstName: c.firstName,
+          grade: c.grade,
+        })),
       })
       setEditing(false)
       await load()
@@ -182,19 +197,26 @@ export function ParticipantDetailView({ participantId, onBack, onOpen }: Props) 
                     className="w-full rounded-lg border border-line px-3 py-2 font-mono"
                   />
                 </label>
-                <label className="text-sm">
-                  <span className="mb-1 block font-medium text-ink-soft">Grade</span>
-                  <select
-                    value={editGrade}
-                    onChange={(e) => setEditGrade(e.target.value)}
-                    className="w-full rounded-lg border border-line px-3 py-2"
-                  >
-                    <option>6th grade</option>
-                    <option>7th grade</option>
-                    <option>8th grade</option>
-                    <option>Multiple kids</option>
-                  </select>
-                </label>
+                {editChildren.some((c) => c.firstName.trim() || c.grade.trim()) ? (
+                  <p className="self-end text-sm text-ink-muted">
+                    Household grade will be set from the children below.
+                  </p>
+                ) : (
+                  <label className="text-sm">
+                    <span className="mb-1 block font-medium text-ink-soft">Grade</span>
+                    <select
+                      value={editGrade}
+                      onChange={(e) => setEditGrade(e.target.value)}
+                      className="w-full rounded-lg border border-line px-3 py-2"
+                    >
+                      <option>6th grade</option>
+                      <option>7th grade</option>
+                      <option>8th grade</option>
+                      <option>Multiple kids</option>
+                    </select>
+                  </label>
+                )}
+                <ChildrenEditor value={editChildren} onChange={setEditChildren} />
                 <div className="flex gap-2 sm:col-span-2">
                   <button
                     type="button"

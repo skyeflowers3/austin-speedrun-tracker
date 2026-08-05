@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { createParticipant } from '../services/dataService'
+import { ChildrenEditor, emptyChildDraft, type ChildDraft } from './ChildrenEditor'
 import { Notice } from './Notice'
 
 interface Props {
@@ -15,6 +16,7 @@ export function AddParticipantForm({ open, onClose, onCreated }: Props) {
   const [email, setEmail] = useState('')
   const [zip, setZip] = useState('')
   const [grade, setGrade] = useState('')
+  const [children, setChildren] = useState<ChildDraft[]>([emptyChildDraft()])
   const [referralCodeFromLink, setReferralCodeFromLink] = useState('')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -24,6 +26,7 @@ export function AddParticipantForm({ open, onClose, onCreated }: Props) {
     setEmail('')
     setZip('')
     setGrade('')
+    setChildren([emptyChildDraft()])
     setReferralCodeFromLink('')
     setError(null)
   }
@@ -38,6 +41,7 @@ export function AddParticipantForm({ open, onClose, onCreated }: Props) {
         email,
         zip,
         grade,
+        children: children.map((c) => ({ firstName: c.firstName, grade: c.grade })),
         referralCodeFromLink: referralCodeFromLink || null,
         submissionMethod: referralCodeFromLink ? 'link' : 'direct_submit',
       })
@@ -52,6 +56,8 @@ export function AddParticipantForm({ open, onClose, onCreated }: Props) {
   }
 
   if (!open) return null
+
+  const hasChildRows = children.some((c) => c.firstName.trim() || c.grade.trim())
 
   return (
     <form
@@ -93,22 +99,29 @@ export function AddParticipantForm({ open, onClose, onCreated }: Props) {
             className="w-full rounded-lg border border-line px-3 py-2 font-mono"
           />
         </label>
-        <label className="text-sm">
-          <span className="mb-1 block font-medium">Grade</span>
-          <select
-            required
-            value={grade}
-            onChange={(e) => setGrade(e.target.value)}
-            className="w-full rounded-lg border border-line px-3 py-2"
-          >
-            <option value="">Select…</option>
-            {GRADES.map((g) => (
-              <option key={g} value={g}>
-                {g}
-              </option>
-            ))}
-          </select>
-        </label>
+        {!hasChildRows ? (
+          <label className="text-sm">
+            <span className="mb-1 block font-medium">Grade</span>
+            <select
+              required
+              value={grade}
+              onChange={(e) => setGrade(e.target.value)}
+              className="w-full rounded-lg border border-line px-3 py-2"
+            >
+              <option value="">Select…</option>
+              {GRADES.map((g) => (
+                <option key={g} value={g}>
+                  {g}
+                </option>
+              ))}
+            </select>
+          </label>
+        ) : (
+          <p className="self-end text-sm text-ink-muted">
+            Household grade will be set from the children below.
+          </p>
+        )}
+        <ChildrenEditor value={children} onChange={setChildren} />
         <label className="text-sm sm:col-span-2">
           <span className="mb-1 block font-medium">Referrer code (optional)</span>
           <input

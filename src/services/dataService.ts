@@ -9,24 +9,94 @@ import type {
   SubmissionMethod,
 } from '../types'
 
+export interface ChildInput {
+  firstName: string
+  grade: string
+}
+
 interface Store {
   participants: Participant[]
   referrals: Referral[]
+  children: Child[]
 }
 
 function loadStore(): Store {
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
-    if (raw) return JSON.parse(raw) as Store
+    if (raw) {
+      const parsed = JSON.parse(raw) as Partial<Store>
+      return {
+        participants: parsed.participants ?? structuredClone(mockParticipants),
+        referrals: parsed.referrals ?? structuredClone(mockReferrals),
+        children: parsed.children ?? [],
+      }
+    }
   } catch {
     /* ignore */
   }
-  const fresh = {
+  const fresh: Store = {
     participants: structuredClone(mockParticipants),
     referrals: structuredClone(mockReferrals),
+    children: [],
   }
   saveStore(fresh)
   return fresh
+}
+
+function normalizeChildren(input: ChildInput[] | undefined): ChildInput[] {
+  if (!input?.length) return []
+  return input
+    .map((c) => ({
+      firstName: c.firstName.trim(),
+      grade: c.grade.trim(),
+    }))
+    .filter((c) => c.firstName || c.grade)
+}
+
+function validateChildren(children: ChildInput[]): void {
+  for (const c of children) {
+    if (!c.firstName || !c.grade) {
+      throw new Error('Each child needs a first name and grade')
+    }
+  }
+}
+
+function gradeFromChildren(children: ChildInput[], fallback: string): string {
+  if (children.length === 0) return fallback
+  if (children.length === 1) return children[0].grade
+  return 'Multiple kids'
+}
+
+async function replaceChildren(participantId: string, children: ChildInput[]): Promise<void> {
+  if (supabase) {
+    const { error: delErr } = await supabase
+      .from('children')
+      .delete()
+      .eq('participant_id', participantId)
+    if (delErr) throw delErr
+    if (children.length === 0) return
+    const { error: insErr } = await supabase.from('children').insert(
+      children.map((c) => ({
+        participant_id: participantId,
+        first_name: c.firstName,
+        grade: c.grade,
+      })),
+    )
+    if (insErr) throw insErr
+    return
+  }
+
+  const store = loadStore()
+  store.children = store.children.filter((c) => c.participantId !== participantId)
+  for (const c of children) {
+    store.children.push({
+      id: crypto.randomUUID(),
+      participantId,
+      firstName: c.firstName,
+      grade: c.grade,
+    })
+  }
+  saveStore(store)
 }
 
 function saveStore(store: Store) {
@@ -127,6 +197,8 @@ export async function getParticipantDetail(id: string): Promise<ParticipantDetai
       hasHomeDevice:
         row.has_home_device == null ? null : Boolean(row.has_home_device),
     }))
+  } else {
+    children = loadStore().children.filter((c) => c.participantId === id)
   }
 
   return { ...participant, referredBy, referralsMade, referredParticipants, children }
@@ -158,6 +230,7 @@ export interface UpdateParticipantInput {
   email: string
   zip: string
   grade: string
+  children?: ChildInput[]
 }
 
 export async function updateParticipant(
@@ -167,7 +240,9 @@ export async function updateParticipant(
   const parentName = input.parentName.trim()
   const email = input.email.trim().toLowerCase()
   const zip = input.zip.trim()
-  const grade = input.grade.trim()
+  const children = normalizeChildren(input.children)
+  validateChildren(children)
+  const grade = gradeFromChildren(children, input.grade.trim())
   if (!parentName || !email || !/^\d{5}$/.test(zip) || !grade) {
     throw new Error('Name, email, 5-digit zip, and grade are required')
   }
@@ -184,6 +259,9 @@ export async function updateParticipant(
       })
       .eq('id', id)
     if (error) throw error
+    if (input.children !== undefined) {
+      await replaceChildren(id, children)
+    }
     return
   }
 
@@ -201,6 +279,9 @@ export async function updateParticipant(
     }
   }
   saveStore(store)
+  if (input.children !== undefined) {
+    await replaceChildren(id, children)
+  }
 }
 
 export async function addReferral(
@@ -269,6 +350,7 @@ export interface CreateParticipantInput {
   email: string
   zip: string
   grade: string
+  children?: ChildInput[]
   /** Referrer's code from ?ref=, if any */
   referralCodeFromLink?: string | null
   submissionMethod?: SubmissionMethod
@@ -278,9 +360,15 @@ export async function createParticipant(input: CreateParticipantInput): Promise<
   const email = input.email.trim().toLowerCase()
   const parentName = input.parentName.trim()
   const zip = input.zip.trim()
-  const grade = input.grade.trim()
+  const children = normalizeChildren(input.children)
+  validateChildren(children)
+  const grade = gradeFromChildren(children, input.grade.trim())
   const method: SubmissionMethod = input.submissionMethod ?? (input.referralCodeFromLink ? 'link' : 'direct_submit')
   const refFromLink = (input.referralCodeFromLink || '').trim().toUpperCase() || null
+
+  if (!parentName || !email || !/^\d{5}$/.test(zip) || !grade) {
+    throw new Error('Name, email, 5-digit zip, and grade (or at least one child) are required')
+  }
 
   if (supabase) {
     let referredById: string | null = null
@@ -321,6 +409,9 @@ export async function createParticipant(input: CreateParticipantInput): Promise<
         .single()
       if (!error && data) {
         const created = mapParticipant(data as Record<string, unknown>)
+        if (children.length > 0) {
+          await replaceChildren(created.id, children)
+        }
         if (referredById) {
           await supabase.from('referrals').insert({
             referrer_id: referredById,
@@ -377,6 +468,9 @@ export async function createParticipant(input: CreateParticipantInput): Promise<
     })
   }
   saveStore(store)
+  if (children.length > 0) {
+    await replaceChildren(created.id, children)
+  }
   return created
 }
 
@@ -411,6 +505,7 @@ export async function deleteParticipant(id: string): Promise<void> {
   store.referrals = store.referrals.filter(
     (r) => r.referrerId !== id && r.referredId !== id,
   )
+  store.children = store.children.filter((c) => c.participantId !== id)
   saveStore(store)
 }
 
