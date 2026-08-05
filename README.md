@@ -49,6 +49,8 @@ In the SQL Editor, run in order (same project):
 4. [`supabase/patch-signup-children.sql`](supabase/patch-signup-children.sql) — `children` table + current `register_participant` (parent first/last + kids jsonb)
 5. [`supabase/patch-register-full.sql`](supabase/patch-register-full.sql) — full registration fields used by `parents.html#join`
 6. [`supabase/patch-portal-auth.sql`](supabase/patch-portal-auth.sql) — parent portal (`get_my_household` / Auth link) for [`austin-speedrun-portal`](../austin-speedrun-portal)
+7. [`supabase/patch-zip-signup-count.sql`](supabase/patch-zip-signup-count.sql) — public `zip_signup_count(zip)` for “X signed up in your zip” UI
+
 Optional: [`supabase/seed.sql`](supabase/seed.sql) for demo rows.
 
 Parent portal: **Create password** / **Sign in** via `set-portal-password` (registered emails only, no auth email). Resend `send-portal-setup-link` is parked until a sending domain is ready. See [`austin-speedrun-portal`](../austin-speedrun-portal).
