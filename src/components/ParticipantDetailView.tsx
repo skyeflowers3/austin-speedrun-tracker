@@ -82,10 +82,21 @@ export function ParticipantDetailView({ participantId, onBack, onOpen }: Props) 
             key: c.id,
             firstName: c.firstName,
             grade: c.grade,
+            dateOfBirth: c.dateOfBirth ?? '',
+            schoolName: c.schoolName ?? '',
+            schoolType: c.schoolType ?? '',
+            studentEmail: c.studentEmail ?? '',
+            accommodations: c.accommodations ?? '',
+            hasHomeDevice: Boolean(c.hasHomeDevice),
           }))
         : [emptyChildDraft()],
     )
     setEditing(true)
+    setError(null)
+  }
+
+  function cancelEdit() {
+    setEditing(false)
     setError(null)
   }
 
@@ -102,6 +113,12 @@ export function ParticipantDetailView({ participantId, onBack, onOpen }: Props) 
         children: editChildren.map((c) => ({
           firstName: c.firstName,
           grade: c.grade,
+          dateOfBirth: c.dateOfBirth || null,
+          schoolName: c.schoolName || null,
+          schoolType: c.schoolType || null,
+          studentEmail: c.studentEmail || null,
+          accommodations: c.accommodations || null,
+          hasHomeDevice: c.hasHomeDevice,
         })),
       })
       setEditing(false)
@@ -148,7 +165,26 @@ export function ParticipantDetailView({ participantId, onBack, onOpen }: Props) 
           ← All participants
         </button>
         <div className="flex flex-wrap gap-2">
-          {!editing ? (
+          {editing ? (
+            <>
+              <button
+                type="button"
+                disabled={saving}
+                onClick={() => void saveEdit()}
+                className="rounded-lg bg-navy px-3 py-1.5 text-sm font-semibold text-white hover:bg-ink disabled:opacity-50"
+              >
+                {saving ? 'Saving…' : 'Save'}
+              </button>
+              <button
+                type="button"
+                disabled={saving}
+                onClick={cancelEdit}
+                className="rounded-lg border border-line bg-surface-elevated px-3 py-1.5 text-sm font-semibold text-ink-soft hover:bg-surface-warm disabled:opacity-50"
+              >
+                Cancel
+              </button>
+            </>
+          ) : (
             <button
               type="button"
               onClick={startEdit}
@@ -156,7 +192,7 @@ export function ParticipantDetailView({ participantId, onBack, onOpen }: Props) 
             >
               Edit
             </button>
-          ) : null}
+          )}
           <button
             type="button"
             onClick={() => setConfirmDeleteOpen(true)}
@@ -199,7 +235,7 @@ export function ParticipantDetailView({ participantId, onBack, onOpen }: Props) 
                 </label>
                 {editChildren.some((c) => c.firstName.trim() || c.grade.trim()) ? (
                   <p className="self-end text-sm text-ink-muted">
-                    Household grade will be set from the children below.
+                    Household grade follows the children list below.
                   </p>
                 ) : (
                   <label className="text-sm">
@@ -216,27 +252,6 @@ export function ParticipantDetailView({ participantId, onBack, onOpen }: Props) 
                     </select>
                   </label>
                 )}
-                <ChildrenEditor value={editChildren} onChange={setEditChildren} />
-                <div className="flex gap-2 sm:col-span-2">
-                  <button
-                    type="button"
-                    disabled={saving}
-                    onClick={() => void saveEdit()}
-                    className="rounded-lg bg-navy px-3 py-2 text-sm font-semibold text-white hover:bg-ink disabled:opacity-50"
-                  >
-                    {saving ? 'Saving…' : 'Save'}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setEditing(false)
-                      setError(null)
-                    }}
-                    className="rounded-lg border border-line px-3 py-2 text-sm font-medium text-ink-soft"
-                  >
-                    Cancel
-                  </button>
-                </div>
               </div>
             ) : (
               <>
@@ -322,8 +337,29 @@ export function ParticipantDetailView({ participantId, onBack, onOpen }: Props) 
       </div>
 
       <section className="mt-6 rounded-xl border border-line bg-surface-elevated p-6">
-        <h2 className="font-display text-xl font-semibold">Children</h2>
-        {detail.children.length === 0 ? (
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <h2 className="font-display text-xl font-semibold">Children</h2>
+          {editing ? (
+            <button
+              type="button"
+              className="text-sm font-semibold text-blue hover:underline"
+              onClick={() => setEditChildren((prev) => [...prev, emptyChildDraft()])}
+            >
+              + Add child
+            </button>
+          ) : null}
+        </div>
+        {editing ? (
+          <div className="mt-3">
+            <ChildrenEditor
+              value={editChildren}
+              onChange={setEditChildren}
+              variant="full"
+              showLabel={false}
+              showAddButton={false}
+            />
+          </div>
+        ) : detail.children.length === 0 ? (
           <p className="mt-3 text-sm text-ink-muted">No children on file (waitlist-only or not provided).</p>
         ) : (
           <ul className="mt-3 divide-y divide-line">

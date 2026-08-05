@@ -1,4 +1,5 @@
 import { mockParticipants, mockReferrals, STORAGE_KEY } from '../data/mockData'
+import { newId } from '../lib/id'
 import { isSupabaseConfigured, supabase } from '../lib/supabase'
 import type {
   Child,
@@ -12,6 +13,12 @@ import type {
 export interface ChildInput {
   firstName: string
   grade: string
+  dateOfBirth?: string | null
+  schoolName?: string | null
+  schoolType?: string | null
+  studentEmail?: string | null
+  accommodations?: string | null
+  hasHomeDevice?: boolean | null
 }
 
 interface Store {
@@ -47,8 +54,14 @@ function normalizeChildren(input: ChildInput[] | undefined): ChildInput[] {
   if (!input?.length) return []
   return input
     .map((c) => ({
-      firstName: c.firstName.trim(),
-      grade: c.grade.trim(),
+      firstName: (c.firstName || '').trim(),
+      grade: (c.grade || '').trim(),
+      dateOfBirth: (c.dateOfBirth || '').trim() || null,
+      schoolName: (c.schoolName || '').trim() || null,
+      schoolType: (c.schoolType || '').trim() || null,
+      studentEmail: (c.studentEmail || '').trim() || null,
+      accommodations: (c.accommodations || '').trim() || null,
+      hasHomeDevice: c.hasHomeDevice ?? null,
     }))
     .filter((c) => c.firstName || c.grade)
 }
@@ -80,6 +93,12 @@ async function replaceChildren(participantId: string, children: ChildInput[]): P
         participant_id: participantId,
         first_name: c.firstName,
         grade: c.grade,
+        date_of_birth: c.dateOfBirth,
+        school_name: c.schoolName,
+        school_type: c.schoolType,
+        student_email: c.studentEmail,
+        accommodations: c.accommodations,
+        has_home_device: c.hasHomeDevice,
       })),
     )
     if (insErr) throw insErr
@@ -90,10 +109,16 @@ async function replaceChildren(participantId: string, children: ChildInput[]): P
   store.children = store.children.filter((c) => c.participantId !== participantId)
   for (const c of children) {
     store.children.push({
-      id: crypto.randomUUID(),
+      id: newId(),
       participantId,
       firstName: c.firstName,
       grade: c.grade,
+      dateOfBirth: c.dateOfBirth ?? null,
+      schoolName: c.schoolName ?? null,
+      schoolType: c.schoolType ?? null,
+      studentEmail: c.studentEmail ?? null,
+      accommodations: c.accommodations ?? null,
+      hasHomeDevice: c.hasHomeDevice ?? null,
     })
   }
   saveStore(store)
@@ -320,7 +345,7 @@ export async function addReferral(
   if (!referredRow) throw new Error('Referred participant not found')
   referredRow.referredById = referrerId
   store.referrals.push({
-    id: crypto.randomUUID(),
+    id: newId(),
     referrerId,
     referredId,
     referredName: referredRow.parentName,
@@ -444,7 +469,7 @@ export async function createParticipant(input: CreateParticipantInput): Promise<
   }
 
   const created: Participant = {
-    id: crypto.randomUUID(),
+    id: newId(),
     parentName,
     email,
     zip,
@@ -457,7 +482,7 @@ export async function createParticipant(input: CreateParticipantInput): Promise<
   store.participants.push(created)
   if (referredById) {
     store.referrals.push({
-      id: crypto.randomUUID(),
+      id: newId(),
       referrerId: referredById,
       referredId: created.id,
       referredName: parentName,

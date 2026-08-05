@@ -18,6 +18,15 @@ npm run dev
 
 Open the printed localhost URL. Without `.env`, the app uses mock data.
 
+## Deploy (S3)
+
+Staging: [austin-speedrun-tracker-site](http://austin-speedrun-tracker-site.s3-website-us-east-1.amazonaws.com/)
+
+```bash
+# Needs AWS credentials + .env (VITE_SUPABASE_*, VITE_PUBLIC_SITE_URL → marketing staging)
+./deploy.sh
+```
+
 ## Secrets (do not commit)
 
 | File | Commit? |
@@ -37,7 +46,7 @@ Before you commit, run `git status` and confirm `.env` / `supabase-config.js` ar
 - [x] Tracker `.env` + marketing `supabase-config.js` with the same project keys
 - [x] Confirm Tracker shows “connected to Supabase”
 - [ ] Push this repo to a GT-accessible GitHub remote if it is not already
-- [ ] **At Tracker deploy (you own this):** set `VITE_PUBLIC_SITE_URL` to the live marketing URL (staging S3 now; later `https://speedrun.gt.school`), then `npm run build` and redeploy. Vite bakes this at build time — if you skip it, share links stay wrong. Marketing site deploy is separate and does not need this from you.
+- [ ] **At Tracker deploy:** set `VITE_PUBLIC_SITE_URL` to the live marketing URL (staging S3 now; later `https://speedrun.gt.school`), then `./deploy.sh`. Vite bakes env at build time — if you skip it, share links stay wrong. Staging host: `http://austin-speedrun-tracker-site.s3-website-us-east-1.amazonaws.com/`
 
 ## Supabase SQL
 
