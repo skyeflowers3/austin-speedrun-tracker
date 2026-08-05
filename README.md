@@ -51,7 +51,7 @@ In the SQL Editor, run in order (same project):
 6. [`supabase/patch-portal-auth.sql`](supabase/patch-portal-auth.sql) — parent portal (`get_my_household` / Auth link) for [`austin-speedrun-portal`](../austin-speedrun-portal)
 Optional: [`supabase/seed.sql`](supabase/seed.sql) for demo rows.
 
-Parent portal login uses **Supabase magic links** (no Resend). The `provision-portal-login` function is unused for now.
+Parent portal: **Create password** / **Sign in** via `set-portal-password` (registered emails only, no auth email). Resend `send-portal-setup-link` is parked until a sending domain is ready. See [`austin-speedrun-portal`](../austin-speedrun-portal).
 
 ## How data gets in
 
