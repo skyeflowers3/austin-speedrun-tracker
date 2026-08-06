@@ -59,6 +59,8 @@ In the SQL Editor, run in order (same project):
 5. [`supabase/patch-register-full.sql`](supabase/patch-register-full.sql) — full registration fields used by `parents.html#join`
 6. [`supabase/patch-portal-auth.sql`](supabase/patch-portal-auth.sql) — parent portal (`get_my_household` / Auth link) for [`austin-speedrun-portal`](../austin-speedrun-portal)
 7. [`supabase/patch-zip-signup-count.sql`](supabase/patch-zip-signup-count.sql) — public `zip_signup_count(zip)` for “X signed up in your zip” UI
+8. [`supabase/patch-add-my-child.sql`](supabase/patch-add-my-child.sql) — portal `add_my_child` for parents adding kids after signup
+9. [`supabase/patch-household-referral-count.sql`](supabase/patch-household-referral-count.sql) — `get_my_household` includes `referral_count`
 
 Optional: [`supabase/seed.sql`](supabase/seed.sql) for demo rows.
 
