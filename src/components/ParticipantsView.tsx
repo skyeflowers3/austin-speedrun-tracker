@@ -128,7 +128,7 @@ export function ParticipantsView({ onOpen }: Props) {
       {usingMockData() && (
         <Notice className="mb-4">
           Tracker is on <b>mock data</b>. Connect Supabase (<code className="font-mono">.env</code>) to
-          see real signups from <code className="font-mono">parents.html#join</code>. Until then, use{' '}
+          see real signups from <code className="font-mono">signup.html#join</code>. Until then, use{' '}
           <b>Add participant</b>.
         </Notice>
       )}

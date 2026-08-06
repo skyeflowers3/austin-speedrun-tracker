@@ -3,7 +3,7 @@
 Ops tracker for Austin Speedrun waitlist / signup referrals.
 
 - **Participants** list (all waitlist + signup rows)
-- **Participant detail**: kids, referral code, share link (`parents.html?ref=CODE#join`), who referred them, people they referred, status edits, Add a referral, Edit, Delete
+- **Participant detail**: kids, referral code, share link (`signup.html?ref=CODE#join`), who referred them, people they referred, status edits, Add a referral, Edit, Delete
 - Works on **local mock data** out of the box; point at **Supabase** when `.env` is set
 
 Marketing site lives in [`austin-speedrun`](../austin-speedrun).
@@ -56,7 +56,7 @@ In the SQL Editor, run in order (same project):
 2. [`supabase/patch-waitlisted-status.sql`](supabase/patch-waitlisted-status.sql) — if needed for `waitlisted` status  
 3. [`supabase/patch-waitlist-and-register.sql`](supabase/patch-waitlist-and-register.sql) — waitlist / register RPCs  
 4. [`supabase/patch-signup-children.sql`](supabase/patch-signup-children.sql) — `children` table + current `register_participant` (parent first/last + kids jsonb)
-5. [`supabase/patch-register-full.sql`](supabase/patch-register-full.sql) — full registration fields used by `parents.html#join`
+5. [`supabase/patch-register-full.sql`](supabase/patch-register-full.sql) — full registration fields used by `signup.html#join`
 6. [`supabase/patch-portal-auth.sql`](supabase/patch-portal-auth.sql) — parent portal (`get_my_household` / Auth link) for [`austin-speedrun-portal`](../austin-speedrun-portal)
 7. [`supabase/patch-zip-signup-count.sql`](supabase/patch-zip-signup-count.sql) — public `zip_signup_count(zip)` for “X signed up in your zip” UI
 8. [`supabase/patch-add-my-child.sql`](supabase/patch-add-my-child.sql) — portal `add_my_child` for parents adding kids after signup
@@ -70,12 +70,12 @@ Parent portal: **Create password** / **Sign in** via `set-portal-password` (regi
 
 | Surface | RPC | Status | Referrals? |
 | --- | --- | --- | --- |
-| Registration — `parents.html#join` | `register_participant` | `registered` | Yes (`?ref=` or optional code field) |
+| Registration — `signup.html#join` | `register_participant` | `registered` | Yes (`?ref=` or optional code field) |
 
 Same email on re-register updates the household. Invite links:
 
 ```
-{VITE_PUBLIC_SITE_URL}/parents.html?ref=CODE#join
+{VITE_PUBLIC_SITE_URL}/signup.html?ref=CODE#join
 ```
 
 Run [`supabase/patch-register-full.sql`](supabase/patch-register-full.sql) for the full registration field set.
@@ -89,4 +89,4 @@ Run [`supabase/patch-register-full.sql`](supabase/patch-register-full.sql) for t
 1. Tracker: `.env` with `VITE_SUPABASE_URL` + `VITE_SUPABASE_ANON_KEY` (+ optional `VITE_PUBLIC_SITE_URL`)
 2. Marketing: copy `assets/supabase-config.example.js` → `assets/supabase-config.js` with the same URL + anon key
 3. Serve marketing (`python3 -m http.server 8000` from `austin-speedrun`), run Tracker (`npm run dev`)
-4. Register on `parents.html#join` → refresh Participants
+4. Register on `signup.html#join` → refresh Participants

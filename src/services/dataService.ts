@@ -553,5 +553,5 @@ export function publicSiteBaseUrl(): string {
 }
 
 export function signupLinkForCode(code: string): string {
-  return `${publicSiteBaseUrl()}/parents.html?ref=${encodeURIComponent(code)}#join`
+  return `${publicSiteBaseUrl()}/signup.html?ref=${encodeURIComponent(code)}#join`
 }
