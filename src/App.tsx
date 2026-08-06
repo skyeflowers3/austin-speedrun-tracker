@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { ParticipantDetailView } from './components/ParticipantDetailView'
 import { ParticipantsView } from './components/ParticipantsView'
+import speedrunMark from './assets/speedrun-mark-gt.svg'
 
 function readParticipantFromUrl(): string | null {
   return new URLSearchParams(window.location.search).get('participant')
@@ -42,12 +43,16 @@ export default function App() {
     <div className="min-h-screen">
       <header className="border-b border-line bg-surface-elevated">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
-          <button type="button" onClick={goHome} className="text-left">
-            <div className="font-display text-lg font-semibold tracking-tight text-navy">
-              Austin Speedrun
-            </div>
-            <div className="font-mono text-[11px] tracking-widest text-gold-deep uppercase">
-              Participant tracker
+          <button type="button" onClick={goHome} className="flex items-center gap-2.5 text-left" aria-label="Austin Speedrun home">
+            <img src={speedrunMark} alt="" className="h-9 w-auto" />
+            <div>
+              <div className="font-sans text-lg font-bold tracking-tight uppercase leading-none">
+                <span className="text-ink">AUSTIN</span>
+                <span className="text-gold">SPEEDRUN</span>
+              </div>
+              <div className="mt-1 font-mono text-[11px] tracking-widest text-gold-deep uppercase">
+                Participant tracker
+              </div>
             </div>
           </button>
         </div>
