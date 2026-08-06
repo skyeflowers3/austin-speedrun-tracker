@@ -14,6 +14,35 @@ import { ConfirmDialog } from './ConfirmDialog'
 import { Notice } from './Notice'
 import { StatusBadge } from './StatusBadge'
 
+/** Clipboard API needs a secure context; S3 website hosting is HTTP. */
+async function copyText(text: string): Promise<boolean> {
+  try {
+    if (navigator.clipboard?.writeText && window.isSecureContext) {
+      await navigator.clipboard.writeText(text)
+      return true
+    }
+  } catch {
+    /* fall through */
+  }
+  const ta = document.createElement('textarea')
+  ta.value = text
+  ta.setAttribute('readonly', '')
+  ta.style.position = 'fixed'
+  ta.style.left = '-9999px'
+  document.body.appendChild(ta)
+  ta.focus()
+  ta.select()
+  ta.setSelectionRange(0, text.length)
+  let ok = false
+  try {
+    ok = document.execCommand('copy')
+  } catch {
+    ok = false
+  }
+  document.body.removeChild(ta)
+  return ok
+}
+
 interface Props {
   participantId: string
   onBack: () => void
@@ -311,7 +340,8 @@ export function ParticipantDetailView({ participantId, onBack, onOpen }: Props) 
               type="button"
               className="rounded-lg bg-navy px-3 py-2 text-sm font-semibold text-white hover:bg-ink"
               onClick={() => {
-                void navigator.clipboard.writeText(link).then(() => {
+                void copyText(link).then((ok) => {
+                  if (!ok) return
                   setCopied(true)
                   setTimeout(() => setCopied(false), 1500)
                 })
